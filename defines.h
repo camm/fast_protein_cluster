@@ -206,7 +206,7 @@
 #define PDB_FILENAME_EXTENSION ".pdb"
 #define SS_FILENAME_EXTENSION DSSP_FILENAME_EXTENSION
 #define CONFORMATION_FILENAME_EXTENSION PDB_FILENAME_EXTENSION
-#define VERSION "RAMP v0.3 by Ram Samudrala (ram@compbio.washington.edu)"
+#define VERSION "RAMP v0.4 by Ram Samudrala (ram@compbio.washington.edu) and Jose Borreguero (borreguero@gmail.com)"
 
 /******************************************************************/
 /* Various constants */

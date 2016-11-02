@@ -17,6 +17,8 @@ extern int check_malloc(void *pointer, const char pointer_string[], const char r
 extern int check_maximum_value(int value, int maximum_value, const char routine_name[]);
 extern int check_null(void *pointer, const char routine_name[]);
 extern int open_file(FILE **fp, const char filename[], const char status[],  const char routine_name[]);
+extern int open_binpos_read(FILE **fp, const char filename[], size_t *size, int *nat, int *nmodels_p);
+extern void binpos_read(FILE *file_p, float *array_p, int pdb_size, int nmodels);
 extern int close_file(FILE **fp, const char filename[], const char routine_name[]);
 extern int myisnan_(int *nanflag, double *value);
 	

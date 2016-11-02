@@ -108,3 +108,4 @@ test/output_binpos.density
 test/traj.binpos
 test/traj.pdb
 test/traj.zip
+myInstall.sh

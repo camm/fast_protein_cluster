@@ -100,3 +100,11 @@ fireworks/localtest/db
 cel7a/initial_runs/1/traj.xtc
 cel7a/initial_runs/1/topol.tpr
 cel7a/initial_runs/topol.pdb
+fast_protein_cluster
+test/output_binpos.agglomeration.history
+test/output_binpos.cluster.stats
+test/output_binpos.clusters
+test/output_binpos.density
+test/traj.binpos
+test/traj.pdb
+test/traj.zip

@@ -3714,7 +3714,7 @@ class cluster_models_set{ //contains names and coords of structures along with d
     va_end(args);
     double start_time = get_time();  
     sprintf(names_filename,"%s.names",base_filename);
-    sprintf(coords_filename,"%s.coords",base_filename);
+    sprintf(coords_filename,"%s.binpos",base_filename);
     nmodels=read_names_list(names_filename);
     allocate_and_slurp_coords(coords_filename);
     double end_time = get_time();
@@ -4069,29 +4069,29 @@ class cluster_models_set{ //contains names and coords of structures along with d
    names_offsets[m]=current_offset;
    close_file(&list_fp,filename,"read_list_of_structures");
    return(nstructs);
-  }  
-  int allocate_and_slurp_coords(char *filename){
+  }
+
+/**
+ * @brief Load coordinates of trajectory in AMBER7 binpos format to single array
+ *
+ * @param filename : full name of trajectory file
+ * @return : memory occupied by coordinates, in bytes
+ */
+  size_t allocate_and_slurp_coords(char *filename){
    FILE *fp;
-   int read,size;
+   int read;
+   size_t size=0;
    float *my_array=0;
-   open_file(&fp, filename, "r", 0);
-   fseek (fp , 0 , SEEK_END);
-   size = ftell (fp);
-   rewind (fp);
-   //check size
-   nat=size/(3*nmodels*sizeof(float));
+   open_binpos_read(&fp, filename, &size, &nat, &nmodels);
    pdb_size=3*nat;
-   if(size != nat*nmodels*3*sizeof(float)){
-    fprintf(stderr,"non_integer number of models : %d models %d nats %d size\n",nmodels,nat,size);
-    exit(FALSE);
-   } 
    if(size){
-    coords=new float[pdb_size*nmodels];
-    read=fread(coords,1,size,fp);
-    close_file(&fp, filename, "allocate_and_read_coords");
+     coords = new float[pdb_size * nmodels];
+     binpos_read(fp, coords, pdb_size, nmodels);
+     close_file(&fp, filename, "allocate_and_read_coords");
    }
    return(size);
   }
+
   int read_list_of_models(char *filename,int nthreads){
    //structures are assumed to be identical - only CA unless all_atom_flag is set
    FILE *list_fp;

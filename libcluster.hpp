@@ -6375,6 +6375,20 @@ class mapped_cluster_models_set{ //adds a mapping to the cluster_models_set - al
    return ((greater_is_better && a>b) || (!greater_is_better && a<b));
   }
 };
+
+
+/**
+ * @brief Record quantities at each step in the clustering process for report.
+ */
+template <class T>
+class history_record {
+
+public:
+  std::pair <int,int> id_pair;
+  T distance;
+};
+
+
 template <class T>
 class cluster_partition { //the cluster membership - with a set of models provides the entire description of the clusters
  friend class mapped_cluster_set<T>;
@@ -6524,7 +6538,8 @@ class cluster_partition { //the cluster membership - with a set of models provid
   }
   
 
- int reduce_by_agglomeration_single_linkage(int final_nclusters,mapped_cluster_models_set<T> *models, int *history, bool history_only,bool initialize, int nthreads){
+ int reduce_by_agglomeration_single_linkage(int final_nclusters,mapped_cluster_models_set<T> *models,
+    history_record<T> *history, bool history_only,bool initialize, int nthreads){
   //check on max threads
 #ifdef OPENMP  
   int max_threads=omp_get_max_threads();
@@ -6782,9 +6797,11 @@ class cluster_partition { //the cluster membership - with a set of models provid
     for(int k=idx2;k<nmap-1;k++)
      cmap[k]=cmap[k+1];
     if(history){
-     history[2*nchanges]=cidx2;
-     history[2*nchanges+1]=cidx1;
-     nchanges++;    
+      history_record<T> &record = history[nchanges];
+      record.id_pair.first=cidx2;
+      record.id_pair.second=cidx1;
+      record.distance=min_dist;
+      nchanges++;
     }
     delete_time+=get_time()-part_time;  
     nmap--;
@@ -6834,7 +6851,8 @@ class cluster_partition { //the cluster membership - with a set of models provid
    return(nchanges/2);
  }
 
- int reduce_by_agglomeration_complete_linkage(int final_nclusters,mapped_cluster_models_set <T> *models, int *history, bool history_only,bool initialize, int nthreads){
+ int reduce_by_agglomeration_complete_linkage(int final_nclusters,mapped_cluster_models_set <T> *models,
+    history_record<T> *history, bool history_only, bool initialize, int nthreads){
 
 #ifdef OPENMP  
   int max_threads=omp_get_max_threads();
@@ -7198,8 +7216,10 @@ class cluster_partition { //the cluster membership - with a set of models provid
     for(int k=idx2;k<nmap-1;k++)
      cmap[k]=cmap[k+1];
     if(history){
-     history[2*nchanges]=cidx2;
-     history[2*nchanges+1]=cidx1;
+     history_record<T> &record = history[nchanges];
+     record.id_pair.first=cidx2;
+     record.id_pair.second=cidx1;
+     record.distance=min_dist;
      nchanges++;    
     }
     nmap--;
@@ -7249,7 +7269,8 @@ class cluster_partition { //the cluster membership - with a set of models provid
    return(nchanges/2);
  }
       
- int reduce_by_agglomeration_average(int final_nclusters,mapped_cluster_models_set <T> *models, int *history, bool history_only,bool initialize, int nthreads){ //uses average cluster_distance
+ int reduce_by_agglomeration_average(int final_nclusters,mapped_cluster_models_set <T> *models,
+   history_record<T> *history, bool history_only,bool initialize, int nthreads){ //uses average cluster_distance
 #ifdef OPENMP  
   int max_threads=omp_get_max_threads();
   int my_max_threads=(gcpu_info.hyperthreads)? gcpu_info.cores/2: gcpu_info.cores ;
@@ -7604,8 +7625,10 @@ class cluster_partition { //the cluster membership - with a set of models provid
    for(int k=idx2;k<nmap-1;k++)
     cmap[k]=cmap[k+1];
    if(history){
-    history[2*nchanges]=cidx2;
-    history[2*nchanges+1]=cidx1;
+    history_record<T> &record = history[nchanges];
+    record.id_pair.first=cidx2;
+    record.id_pair.second=cidx1;
+    record.distance=min_dist;
     nchanges++;    
    }
    nmap--;
@@ -7655,16 +7678,18 @@ class cluster_partition { //the cluster membership - with a set of models provid
    if(closest_cluster)delete [] closest_cluster;
    return(nchanges/2);
  }
- void adjust_cluster_ids_for_agglomerations(int njoins, int *joins){
-  //first join the clusters 
+
+ void adjust_cluster_ids_for_agglomerations(int njoins, history_record<T> *joins){
+  //first join the clusters
   for(int n=0;n<njoins;n++){
-   int source=joins[2*n];
-   int dest=joins[2*n+1];
+   int source=joins[n].id_pair.first;
+   int dest=joins[n+1].id_pair.second;
    for(int i=0;i<nmodels;i++){
     if(cluster_ids[i]==source)cluster_ids[i]=dest;
-   } 
+   }
   }
- }     
+ }
+
   void test_adjust_density(mapped_cluster_models_set <T> *models, float *slope, float *intercept){
    cluster_partition new_partition=*this;
    //figure out timings for 10, 30 ,50, 100

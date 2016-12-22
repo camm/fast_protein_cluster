@@ -782,10 +782,10 @@ template <class T,class T2> //types are those of the prune and cluster classes
   double start_cluster=get_time();
   //hierarchical clustering
   if(prune_options->method == HSINGLE || prune_options->method == HCOMPLETE ||prune_options->method == HAVERAGE ){
-   int *history=0;
+   history_record<T> *history=NULL;
    int initial_nmodels=models->nmodels;
    prune_cluster= new mapped_cluster_set<T>(models,models->nmodels,1,seed,0);
-   history=new  int [initial_nmodels*2];
+   history = new history_record<T>[initial_nmodels];
    if(prune_options->method == HCOMPLETE){
     fprintf(stderr,"using complete linkage/max-distance between elements as cluster distance\n");
     prune_cluster->best_partition->reduce_by_agglomeration_complete_linkage(prune_options->nclusters,prune_cluster->models,history,0,1,nthreads);
@@ -805,10 +805,12 @@ template <class T,class T2> //types are those of the prune and cluster classes
     sprintf(temp_filename,"%s.prune.agglomeration.history",prune_options->output_filename);
     fprintf(stderr,"writing out history file\n");
     open_file(&fp,temp_filename, "w", 0);
-    for(int n=0;n<initial_nmodels;n++)
-     fprintf(fp,"%d %d %d\n",n,history[2*n],history[2*n+1]);
+    for(int n=0;n<initial_nmodels;n++){
+      fprintf(fp,"%d %d %d %f\n",n,history[n].id_pair.first,history[n].id_pair.second,
+        static_cast<double>(history[n].distance));
+    }
     close_file(&fp,temp_filename, 0);
-    if(history) delete [] history;
+    delete [] history;
    }
   }
   else if(prune_options->method == KCENTERS){
@@ -932,9 +934,11 @@ void cluster_it(int nthreads,cluster_options *cluster_options,cluster_models_set
  else if(cluster_options->method == HCOMPLETE || cluster_options->method == HAVERAGE || cluster_options->method == HSINGLE ){
   fprintf(stderr,"hierarchical clustering\n");
   double start_cluster=get_time();
-  int *history=new  int[models->nmodels*2];
-  for(int i=0;i<models->nmodels*2;i++)
-   history[i]=-1;
+  history_record<T> *history = new history_record<T>[models->nmodels];
+  for(int i=0;i<models->nmodels;i++){
+   history[i].id_pair.first=-1;
+   history[i].id_pair.second=-1;
+  }
   mapped_cluster_set<T> hcluster=mapped_cluster_set<T>((cluster_models_set<T>*) models,models->nmodels,1,seed,0);
   if(cluster_options->method == HCOMPLETE){
    fprintf(stderr,"using complete linkage/max-distance between elements as cluster distance\n");
@@ -955,10 +959,12 @@ void cluster_it(int nthreads,cluster_options *cluster_options,cluster_models_set
    sprintf(temp_filename,"%s.agglomeration.history",cluster_options->output_filename);
    fprintf(stderr,"writing out history file\n");
    open_file(&fp,temp_filename, "w", 0);
-   for(int n=0;n<models->nmodels;n++)
-    fprintf(fp,"%d %d %d\n",n,history[2*n],history[2*n+1]);
+   for(int n=0;n<models->nmodels;n++){
+     fprintf(fp,"%d %d %d %f\n",n,history[n].id_pair.first,history[n].id_pair.second,
+       static_cast<double>(history[n].distance));
+   }
    close_file(&fp,temp_filename, 0);
-   if(history) delete [] history;
+   delete [] history;
   }
   hcluster.print_centers(stderr,hcluster.best_partition);
 
